@@ -22,7 +22,7 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity {
 
     private int FM_NOTIFICATRION_ID = 0;
-    private Button btnNotification;
+    private Button btnNotification,btnRemove;
     private String channelId;
     NotificationManager manager;
     NotificationCompat.Builder builderNOtification;
@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private void initialize() {
         builderNOtification = new NotificationCompat.Builder(this,channelId);
         btnNotification = findViewById(R.id.btnNotification);
+        btnRemove = findViewById(R.id.btnRemove);
         manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     }
 
@@ -46,6 +47,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 popupCreateNotificationDetails().show();
+            }
+        });
+
+        btnRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                removeAllNotifications();
             }
         });
     }
@@ -86,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             if (manager.getActiveNotifications()[0].getId() != Integer.parseInt(notificationId)) {
+                                removeAllNotifications();
                                 createNotification(title.getText().toString(),
                                         content.getText().toString(),
                                         Integer.parseInt(notificationId));
@@ -93,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "Already This Notification present in TaskBar!", Toast.LENGTH_SHORT).show();
                             }
                         }catch (IndexOutOfBoundsException e){
+                            removeAllNotifications();
                             createNotification(title.getText().toString(),
                                     content.getText().toString(),
                                     Integer.parseInt(notificationId));
@@ -120,6 +130,10 @@ public class MainActivity extends AppCompatActivity {
         return builder.create();
     }
 
+    private void removeAllNotifications() {
+        manager.cancelAll();
+    }
+
     private void createNotification(String s, String toString, int i) {
 
         builderNOtification.setSmallIcon(R.mipmap.ic_launcher)
@@ -130,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
+        builderNOtification.setOngoing(true);
         builderNOtification.setContentIntent(pendingIntent);
-        removeNotification(i);
         manager.notify(i,builderNOtification.build());
 
     }
