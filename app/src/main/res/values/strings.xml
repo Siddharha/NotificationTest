@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Notification Test</string>
+    <string name="pm_channel_name">Notification Channel Test</string>
 </resources>

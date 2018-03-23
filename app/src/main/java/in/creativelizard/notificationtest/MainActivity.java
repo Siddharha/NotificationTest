@@ -2,10 +2,12 @@ package in.creativelizard.notificationtest;
 
 import android.app.AlertDialog;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -19,6 +21,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.lang.reflect.Array;
+
 public class MainActivity extends AppCompatActivity {
 
     private int FM_NOTIFICATRION_ID = 0;
@@ -26,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private String channelId;
     NotificationManager manager;
     NotificationCompat.Builder builderNOtification;
-
+    long[] vibrationPattern = {100, 200, 300, 400};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initialize() {
+        channelId = "1";
         builderNOtification = new NotificationCompat.Builder(this,channelId);
         btnNotification = findViewById(R.id.btnNotification);
         btnRemove = findViewById(R.id.btnRemove);
@@ -87,17 +92,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                String notificationId = fcmIdText.getText().toString();
-                if(!notificationId.isEmpty()) {
+                //channelId = fcmIdText.getText().toString();
+                if(!channelId.isEmpty()) {
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
                         try {
-                            if (manager.getActiveNotifications()[0].getId() != Integer.parseInt(notificationId)) {
-                                removeAllNotifications();
-                                createNotification(title.getText().toString(),
-                                        content.getText().toString(),
-                                        Integer.parseInt(notificationId));
+                            if (manager.getActiveNotifications()[0].getId() != Integer.parseInt(channelId)) {
+
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    if(!(manager.getNotificationChannel(channelId).getId()).equalsIgnoreCase(fcmIdText.getText().toString())){
+                                        removeAllNotifications();
+                                        createNotification(title.getText().toString(),
+                                                content.getText().toString(),
+                                                Integer.parseInt(fcmIdText.getText().toString()));
+                                    }else {
+                                        Toast.makeText(MainActivity.this, "Already This Notification present in TaskBar!", Toast.LENGTH_SHORT).show();
+                                    }
+                                }else {
+                                    removeAllNotifications();
+                                    createNotification(title.getText().toString(),
+                                            content.getText().toString(),
+                                            Integer.parseInt(fcmIdText.getText().toString()));
+                                }
+
                             } else {
                                 Toast.makeText(MainActivity.this, "Already This Notification present in TaskBar!", Toast.LENGTH_SHORT).show();
                             }
@@ -105,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
                             removeAllNotifications();
                             createNotification(title.getText().toString(),
                                     content.getText().toString(),
-                                    Integer.parseInt(notificationId));
+                                    Integer.parseInt(fcmIdText.getText().toString()));
                         }
                     }
                 }else {
@@ -136,7 +155,36 @@ public class MainActivity extends AppCompatActivity {
 
     private void createNotification(String s, String toString, int i) {
 
-        builderNOtification.setSmallIcon(R.mipmap.ic_launcher)
+        channelId = String.valueOf(i);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+           // NotificationChannel privateMessagesChannel = new NotificationChannel(PRIVATE_MESSAGES_CHANNEL_ID,getString(R.string.pm_channel_name),
+                 //   NotificationManager.IMPORTANCE_DEFAULT);
+
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel privateMessagesChannel = new NotificationChannel(channelId, getString(R.string.pm_channel_name), importance);
+            privateMessagesChannel.enableLights(true);
+
+            manager.createNotificationChannel(privateMessagesChannel);
+
+           privateMessagesChannel.setLightColor(Color.RED);
+            privateMessagesChannel.enableVibration(true);
+            privateMessagesChannel.setVibrationPattern(vibrationPattern);
+            manager.createNotificationChannel(privateMessagesChannel);
+
+            builderNOtification.setDefaults(Notification.DEFAULT_ALL)
+                    .setSmallIcon(R.drawable.ic_launcher_background)
+                    .setVibrate(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400})
+                    .setSound(null)
+                    // .setContent(contentView)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    //.setLargeIcon(picture)
+                    //.setTicker(sTimer)
+                    //.setContentIntent(timerListIntent)
+                    .setAutoCancel(false);
+           // manager.notify(i,builderNOtification.build());
+            manager.notify((int)(System.currentTimeMillis()/1000), builderNOtification.build());
+            }else {
+              builderNOtification.setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(s)
                 .setContentText(toString);
 
@@ -147,6 +195,10 @@ public class MainActivity extends AppCompatActivity {
         builderNOtification.setOngoing(true);
         builderNOtification.setContentIntent(pendingIntent);
         manager.notify(i,builderNOtification.build());
+        }
+
+
+
 
     }
 
